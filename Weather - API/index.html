@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Movie by API</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <h1>Search Movie</h1>
+    <input type="text" id="movieName" placeholder="Enter Movie Name...">
+    <button id="searchMovieBtn">Search Movie</button>
+
+    <div id="movieDetail"></div>
+
+    <script>
+        const API_KEY = "e7587517";
+
+        document.getElementById("searchMovieBtn").addEventListener("click", () => {
+            let movieName = document.getElementById("movieName").value.trim();
+            if (movieName === "") {
+                alert("Enter Movie Name...");
+                return;
+            }
+            searchMovie(movieName);
+        });
+
+        async function searchMovie(name) {
+            document.getElementById("movieDetail").innerHTML = "Loading...";
+            let allMovies = [];
+            let page = 1;
+            let more = true;
+
+            try {
+                while (more && allMovies.length < 10) {
+                    let url = `https://www.omdbapi.com/?s=${name}&apikey=${API_KEY}&page=${page}`;
+                    let res = await fetch(url);
+                    let data = await res.json();
+
+                    if (data.Response === "True") {
+                        allMovies = allMovies.concat(data.Search);
+                        page++;
+                        if (data.Search.length < 10) more = false;
+                    } else {
+                        more = false;
+                    }
+                }
+
+                if (allMovies.length === 0) {
+                    document.getElementById("movieDetail").innerHTML = "No movies found!";
+                    return;
+                }
+
+                // Limit to only 10 movies
+                let limitedMovies = allMovies.slice(0, 10);
+
+                let html = "";
+                limitedMovies.forEach(movie => {
+                    html += `
+            <div class="card">
+              <img src="${movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/150"}">
+              <h4>${movie.Title}</h4>
+              <p>Year: ${movie.Year}</p>
+            </div>
+          `;
+                });
+
+                document.getElementById("movieDetail").innerHTML = html;
+
+            } catch (err) {
+                console.log(err);
+                document.getElementById("movieDetail").innerHTML = "Error fetching data.";
+            }
+        }
+    </script>
+</body>
+
+</html>
